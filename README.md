@@ -12,8 +12,9 @@ read them.
 
 - PHP 8.1 or newer
 - Contao 5.3 or newer, with no upper bound. The Zyppy Suite supports the LTS
-  releases and is tested against the current non-LTS release as well: v3.0.0
-  passes its test suite on core-bundle 5.3.0, 5.7.13 and 6.0.0.
+  releases and is tested against the current non-LTS release as well: the
+  test suite passes on core-bundle 5.3.0, 5.7.13 and 6.0.2 (last run
+  2026-10-07).
 - jQuery on the page layout, **only** if you turn the preview slider on (see
   below). Nothing else in the bundle needs it.
 
@@ -263,10 +264,10 @@ the teaser on its own page — not to unwrap a listing module.
 
 ## Migration from legacy version
 
-Version 3 replaces the 2.x package `asconsulting/zyppy_page` (namespace
+This package replaces the legacy package `asconsulting/zyppy_page` (namespace
 `ZyppyPage\`). The old name does not resolve any more.
 
-The four 2.x Zyppy packages — page, classes, popup and search — have to be
+The four legacy Zyppy packages — page, classes, popup and search — have to be
 upgraded **together, in one `composer update`**: old and new packages register
 the same DCA fields and module types, so a site that briefly has both installed
 double-registers. The walkthrough for the whole suite, including the order of

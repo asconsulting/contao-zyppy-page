@@ -1,26 +1,14 @@
-# Zyppy Suite — upgrading a site from the 2.x packages to v3.0.0
+# Zyppy Suite — upgrading a site from the legacy packages to 5.0.0
 
 This guide covers **all four** Zyppy Suite packages, because upgrading them is a
 single operation — see §0. It lives in `contao-zyppy-page` only; the other three
 repos do not carry a copy.
 
-Every column, name and default below was read from the legacy import commit and
-the `v3.0.0` tag of each repo:
+Every column, name and default below was read from the legacy package source
+and the 5.0.0 release of each package (https://github.com/asconsulting/contao-zyppy-page
+and its siblings).
 
-| Package | legacy import | v3.0.0 |
-|---|---|---|
-| contao-zyppy-page | `770f6e0f` | `3c241fa4` |
-| contao-zyppy-classes | `65dee823` | `c8174488` |
-| contao-zyppy-popup | `430794f2` | `3cd84e56` |
-| contao-zyppy-search | `dd973aef` | `2c52f6b1` |
-
-The `v3.0.0` column is the commit each tag resolves to, not a branch head. If
-you re-derive any of this, fetch each blob at that exact commit from the
-package's GitHub repository (https://github.com/asconsulting/contao-zyppy-page
-and its siblings) — `https://raw.githubusercontent.com/asconsulting/<repo>/{sha}/{path}`
-— rather than from a branch head.
-
-**This sequence has not yet been exercised against a real 2.x → 3.0.0 site
+**This sequence has not yet been exercised against a real legacy → 5.0.0 site
 upgrade.** The findings below are verified against the code at both refs, and
 the individual checks that were run live are called out where they apply — but
 the upgrade as a whole has not been walked end to end on a production site.
@@ -34,7 +22,7 @@ with.
 **Every package was renamed, and so was its namespace.** These are not aliases;
 the old names do not resolve.
 
-| Package | 2.x composer name | 2.x namespace | v3.0.0 composer name | v3.0.0 namespace |
+| Package | legacy composer name | legacy namespace | 5.0.0 composer name | 5.0.0 namespace |
 |---|---|---|---|---|
 | page | `asconsulting/zyppy_page` | `ZyppyPage\` | `asconsulting/contao-zyppy-page` | `Zyppy\Page\` |
 | classes | `asconsulting/zyppy_class` | `ZyppyClass\` | `asconsulting/contao-zyppy-classes` | `Zyppy\Classes\` |
@@ -47,13 +35,13 @@ removed).
 
 1. **Swap the names in one operation.** Edit `composer.json` — remove all four
    `asconsulting/zyppy_*` requirements, add the four `asconsulting/contao-zyppy-*`
-   at `^3.0`, and repoint the `repositories` VCS URLs — then run a single
+   at `^5.0` — then run a single
    `composer update` for the whole set. Do not install the new packages
    alongside the old ones: both register the same DCA fields and the same
    module type keys, and a site that briefly has both will double-register.
 2. **Skeleton installs only:** `config/bundles.php` names each bundle by FQCN.
    `ZyppyPage\ZyppyPageBundle::class` and friends must be hand-edited to the
-   v3.0.0 class names - `Zyppy\Page\PageBundle::class` for this package (the
+   5.0.0 class names - `Zyppy\Page\PageBundle::class` for this package (the
    suite prefix dropped off the class name along with the namespace change),
    and likewise for the other three. Managed Edition installs discover
    the bundles through the ContaoManager plugin and need no edit.
@@ -122,7 +110,7 @@ of the four must be ported to Twig.
 **Element data: byte-identical, zero migration.** This is the headline finding.
 Legacy declared `exclusiveClass`, `commonClasses` and `globalCommonClasses` as
 DCA literals on six tables (`tl_article`, `tl_content`, `tl_form`,
-`tl_form_field`, `tl_module`, `tl_page`). v3.0.0 registers them from PHP
+`tl_form_field`, `tl_module`, `tl_page`). 5.0.0 registers them from PHP
 (`ClassFields::register()`) instead — which is why a naive DCA-literal diff
 reports them "removed" — but the registration declares **the same three names,
 on the same six tables, with the same SQL**:
@@ -139,7 +127,7 @@ fields: the 13 vocabularies (`articleClasses`, `articleCommonClasses`,
 `contentClasses`, `contentCommonClasses`, `formClasses`, `formCommonClasses`,
 `formFieldClasses`, `formFieldCommonClasses`, `moduleClasses`,
 `moduleCommonClasses`, `pageClasses`, `pageCommonClasses`,
-`globalCommonClasses`) **and** the 13 `*Required` switches. v3.0.0's
+`globalCommonClasses`) **and** the 13 `*Required` switches. 5.0.0's
 `tl_settings` keeps **only the 13 `*Required` switches**; the vocabularies move
 into a real table, `tl_zyppy_class`, with a proper backend module.
 
@@ -197,7 +185,7 @@ the one you looked at.
 
 **The one thing that bites.** Legacy shipped
 `contao/templates/modules/mod_article.html5` — an override of **Contao's own**
-article template. v3.0.0 **drops it entirely** (the popup wrapper is applied
+article template. 5.0.0 **drops it entirely** (the popup wrapper is applied
 through listeners now). If a site copied that file into project `templates/`, it
 is still there, still overriding core's `mod_article` for *every* article on the
 site, and it references popup internals that no longer exist. Inspect and
@@ -208,7 +196,7 @@ The other template, `fe_popup_wrapper`, keeps its name and ports `.html5` →
 
 **Cross-repo loose end (not blocking):** ownership of `popupClear` is still
 undecided between popup and search. It reads as a popup field on `tl_module`
-but only means anything to the search module. Left as-is in 3.0.0.
+but only means anything to the search module. Left as-is in 5.0.0.
 
 ---
 
@@ -251,7 +239,7 @@ box once after upgrade.
 
 ## 5. Verification checklist after upgrade
 
-1. `composer show` lists all four `asconsulting/contao-zyppy-*` at `3.0.x` and
+1. `composer show` lists all four `asconsulting/contao-zyppy-*` at `5.0.x` and
    **no** `asconsulting/zyppy_*`.
 2. `contao:migrate --dry-run` — read the DROP list before running for real.
 3. Page slider values carried over **before** the DROP; `previewSliderItems`
