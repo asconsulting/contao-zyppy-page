@@ -1,0 +1,31 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    Zyppy\Page\:
+        resource: ../src
+        # Backend/ and Module/ hold classes Contao constructs itself, not services:
+        # the DCA options_callback is reached through System::importStatic() and
+        # the two modules through Module::findClass(). Left in the glob, each
+        # becomes a private definition nothing references, the removal pass
+        # deletes it, and in debug mode System::importStatic() then throws
+        # ServiceNotFoundException ("removed or inlined") for ImageSizeOptions
+        # instead of constructing it - the tl_module edit form 500s whenever the
+        # back end debug mode is on. Outside the glob it is plainly `new`ed.
+        exclude: ../src/{ContaoManager,Backend,Module}
+
+    # PagePreview and RelatedPages are legacy \Contao\Module subclasses: Contao
+    # constructs them itself via Module::findClass(), so they cannot be given a
+    # constructor. They have to pull this service out of the container by hand,
+    # which means it must be public - autowire/autoconfigure would otherwise make
+    # it private and the removal pass would delete it outright. Note that both the
+    # container build and `php -l` stay green when that is wrong, so the only
+    # proof is calling it.
+    Zyppy\Page\Image\PageImageRenderer:
+        public: true
+        arguments:
+            $pictureFactory: '@contao.image.picture_factory'
+            $filesContext: '@contao.assets.files_context'
+            $requestStack: '@request_stack'
+            $projectDir: '%kernel.project_dir%'

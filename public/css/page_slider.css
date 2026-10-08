@@ -1,0 +1,88 @@
+/**
+ * Zyppy Page - baseline styling for the page preview slider.
+ *
+ * page_slider.js only toggles the .active_preview / .inactive_preview classes; without
+ * a rule that actually hides an inactive item the slider does nothing visible, which is
+ * part of why it has never appeared to work. These are the minimum rules needed for the
+ * feature to function, kept deliberately plain so a theme can override any of them.
+ *
+ * The horizontal layout is not decoration either: the slider divides the list's width by
+ * the width of its first item to decide how many items actually fit, so block-level
+ * items would always collapse that to one.
+ *
+ * @copyright   Andrew Stevens
+ * @author      Andrew Stevens
+ * @license     AGPL-3.0-only
+ * @package     Zyppy Page
+ * @link        https://github.com/asconsulting/contao-zyppy-page
+ */
+
+.mod_pagepreview[data-show] .body {
+	position: relative;
+}
+
+.mod_pagepreview[data-show] .body ul.level_1 {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	white-space: nowrap;
+	font-size: 0; /* removes the inline-block whitespace gaps */
+}
+
+.mod_pagepreview[data-show] .body ul.level_1 > li {
+	display: inline-block;
+	vertical-align: top;
+	white-space: normal;
+	font-size: 1rem;
+	width: 16rem;
+	max-width: 100%;
+}
+
+/* The rule the whole slider turns on */
+.mod_pagepreview[data-show] .body ul.level_1 > li.inactive_preview {
+	display: none;
+}
+
+.mod_pagepreview[data-show] .body .left,
+.mod_pagepreview[data-show] .body .right {
+	position: absolute;
+	top: 50%;
+	z-index: 2;
+	transform: translateY(-50%);
+}
+
+.mod_pagepreview[data-show] .body .left {
+	left: 0;
+}
+
+.mod_pagepreview[data-show] .body .right {
+	right: 0;
+}
+
+.mod_pagepreview[data-show] .body .arrow_left,
+.mod_pagepreview[data-show] .body .arrow_right {
+	display: inline-block;
+	font-size: 2rem;
+	line-height: 1;
+	color: currentColor;
+	text-decoration: none;
+}
+
+/* The header keeps every item on screen and dims the ones not currently shown */
+.mod_pagepreview[data-show] .header ul.level_1 {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.mod_pagepreview[data-show] .header ul.level_1 > li {
+	display: inline-block;
+}
+
+.mod_pagepreview[data-show] .header ul.level_1 > li.inactive_preview {
+	opacity: 0.4;
+}
+
+.mod_pagepreview[data-show] .header ul.level_1 > li.active_preview {
+	opacity: 1;
+}

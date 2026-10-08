@@ -1,0 +1,76 @@
+{#
+	Twig port of mod_pagepreview.html5.
+
+	The identifier stays the flat legacy `mod_pagepreview`: this file sits in a
+	bundle subdirectory with NO `.twig-root` marker anywhere under
+	contao/templates/, so ContaoFilesystemLoader registers it under its bare
+	basename rather than `modules/mod_pagepreview`. That is deliberate - the
+	module's template is chosen by a DCA dropdown built from
+	Controller::getTemplateGroup('mod_'), which throws on any identifier
+	containing a slash.
+
+	The .html5 was DELETED rather than kept alongside. Contao only renders the
+	Twig surrogate when the highest-priority file for the identifier is not an
+	.html5, so leaving both would silently keep rendering the old one.
+
+	Escaping: Twig autoescapes, which is the point of the port. Anything that is
+	genuinely markup rather than data is marked |raw and listed here so the next
+	reader does not have to guess - cssID (a complete ` id="..."` attribute
+	string), style, headline, and headerItems/bodyItems (rendered navigation).
+
+	The `<!-- indexer::stop -->` / `<!-- indexer::continue -->` pair is DELIBERATE
+	and was re-examined on 2026-09-05 rather than inherited. Contao\Search::indexPage()
+	drops everything between them from tl_search, so this module's teasers are not
+	indexed. Keep them:
+
+	- This module renders OTHER pages' teasers. Unwrapped, the listing page would
+	  win the search hit for a word that only appears in a linked page's teaser,
+	  and the visitor would be sent to the index instead of to the page they were
+	  looking for - which is already indexed on its own.
+	- PagePreview extends ModuleNavigation, and core's own mod_navigation carries
+	  exactly this wrapper (both the .html5 and the .html.twig).
+	- It costs the site search no teaser text. asconsulting/contao-zyppy-search
+	  reads page_teaser and page_image straight off the tl_page row in
+	  ResultEnricher::enrich(), not out of the indexed body, so the wrapper decides
+	  which page MATCHES and never what a result DISPLAYS.
+
+	The one consequence, recorded rather than hidden: a teaser whose text appears
+	nowhere on its own page is not searchable at all. The fix for that is to render
+	the teaser on that page, not to unwrap a listing module.
+#}
+<!-- indexer::stop -->
+<nav class="{{ class }} block"{{ cssID|default('')|raw }}{% if style %} style="{{ style|raw }}"{% endif %}{% if sliderItems|default(0) > 0 %} data-show="{{ sliderItems }}"{% endif %}>
+
+	{% if headline %}
+		<{{ hl }}>{{ headline|raw }}</{{ hl }}>
+	{% endif %}
+
+	<a href="{{ request }}#{{ skipId }}" class="invisible">{{ skipNavigation }}</a>
+
+	<div class="header">
+	{{ headerItems|default('')|raw }}
+	</div>
+	<div class="body">
+	{{ bodyItems|default('')|raw }}
+	</div>
+
+	<a id="{{ skipId }}" class="invisible">&nbsp;</a>
+
+</nav>
+{% if sliderItems|default(0) > 0 %}
+	{#
+		Emitted from the module's own output rather than through TL_CSS/TL_JAVASCRIPT,
+		which is the house pattern for front end modules in these packages. The
+		published prefix is "page": it comes from the bundle class name (PageBundle)
+		minus the "Bundle" suffix, NOT from the composer package name.
+
+		jQuery is deliberately NOT loaded here. Contao ships it, but only puts it on
+		the page when the layout has "Add jQuery" ticked, and nothing in PHP can
+		reliably tell whether some other layout field or theme template has already
+		loaded it. A second copy would break every plugin bound to the first, so
+		page_slider.js warns in the console and stops instead. See README.md.
+	#}
+<link rel="stylesheet" href="/bundles/page/css/page_slider.css">
+<script src="/bundles/page/js/page_slider.js" defer></script>
+{% endif %}
+<!-- indexer::continue -->

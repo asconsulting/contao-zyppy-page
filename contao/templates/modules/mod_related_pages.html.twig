@@ -1,0 +1,60 @@
+{#
+	Twig port of mod_related_pages.html5. Flat legacy identifier
+	`mod_related_pages` - see mod_pagepreview.html.twig for why there is no
+	`.twig-root` marker and why the .html5 was deleted.
+
+	The loop variable is `entry`, not `page`: `page` is a reserved-feeling name
+	in a Contao Twig context and shadowing it here would be a trap for anyone
+	extending this template later.
+
+	pageTitle is the OPTIONAL meta override on tl_page and is empty on a stock
+	page, so printing it alone rendered every entry as a link with no visible
+	text. Core resolves this pair the same way round.
+
+	Escaping: page_teaser was already escaped explicitly in the .html5 with
+	StringUtil::specialchars(); autoescaping now does it, so the explicit call is
+	gone rather than doubled. title/pageTitle/url are data and are escaped.
+	page_image and page_images are <img> markup built by PageImageRenderer and
+	stay |raw.
+
+	The `<!-- indexer::stop -->` pair is kept here for the same reason as in
+	mod_pagepreview.html.twig, and it needed deciding separately because this one
+	is NOT a navigation module - RelatedPages extends \Contao\Module, so core's
+	"navigation is not content" precedent does not carry it. The argument that does
+	is the other one: this module renders other pages' teasers, so unwrapped it
+	would make the hosting page win search hits that belong to the pages it links
+	to. See mod_pagepreview.html.twig for the full note and for why this costs
+	contao-zyppy-search nothing.
+#}
+<!-- indexer::stop -->
+<nav class="{{ class }} block"{{ cssID|default('')|raw }}{% if style %} style="{{ style|raw }}"{% endif %}>
+
+	{% if headline %}
+		<{{ hl }}>{{ headline|raw }}</{{ hl }}>
+	{% endif %}
+
+	{% if pages|default([]) %}
+	<div class="related_pages">
+	{% for entry in pages %}
+		<a href="{{ entry.url|default('') }}">
+			<div class="related_page">
+				<h6>{{ entry.pageTitle|default('') ?: entry.title|default('') }}</h6>
+				{% if entry.page_image|default('') %}
+					{{ entry.page_image|raw }}
+				{% endif %}
+				{% if entry.page_images|default([]) %}
+					{% for image in entry.page_images %}
+					{{ image|raw }}
+					{% endfor %}
+				{% endif %}
+				{% if entry.page_teaser|default('') %}
+					<span class="page_teaser">{{ entry.page_teaser }}</span>
+				{% endif %}
+			</div>
+		</a>
+	{% endfor %}
+	</div>
+	{% endif %}
+
+</nav>
+<!-- indexer::continue -->

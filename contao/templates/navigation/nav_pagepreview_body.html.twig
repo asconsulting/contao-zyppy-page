@@ -1,0 +1,37 @@
+{#
+	Twig port of nav_pagepreview_body.html5. Flat legacy identifier
+	`nav_pagepreview_body` - see mod_pagepreview.html.twig for why there is no
+	`.twig-root` marker and why the .html5 was deleted.
+
+	`rel="{{ item.alias }}"` on each <li> IS LOAD-BEARING - page_slider.js pairs
+	this list against the header list by that attribute. See the header template.
+
+	Same navSubitemLimit cap and same first/last computation as the header, over
+	the SLICED list. This template additionally renders subitems, an <h2> title
+	and the teaser on the inactive branch.
+
+	The unclosed <span> that the .html5 carried for years is not reproduced -
+	Twig would not have made it any less broken, and it was fixed before this
+	port. Escaping: teaser/title/pageTitle/alias/class/href/accesskey are data
+	and are escaped; link, page_image, subitems and target are core-built markup
+	and stay |raw.
+#}
+{% set intLevel = level|replace({'level_': ''}) + 0 %}
+{% set intLimit = module.navSubitemLimit|default(0) + 0 %}
+{% set arrShown = (intLimit > 0 and intLevel > 1) ? items|slice(0, intLimit) : items %}
+<ul class="{{ level }}" role="{{ level == 'level_1' ? 'menubar' : 'menu' }}">
+	{% for item in arrShown %}
+		{% set strClass = (item.class|default('') ~ (loop.first ? ' first' : '') ~ (loop.last ? ' last' : ''))|trim %}
+		{% if item.isActive|default(false) %}
+			<li class="{{ strClass }}" rel="{{ item.alias|default('') }}">
+			<span class="{{ strClass }}" role="menuitem"{% if item.subitems|default('') %} aria-haspopup="true"{% endif %}>{{ item.link|default('')|raw }}<span class="page_image">{{ item.page_image|default('')|raw }}</span><span class="page_teaser">{{ item.page_teaser|default('') }}</span></span>{{ item.subitems|default('')|raw }}</li>
+		{% else %}
+			<li{% if strClass %} class="{{ strClass }}"{% endif %} rel="{{ item.alias|default('') }}">
+			<a href="{{ item.href|default('') ?: './' }}" title="{{ item.pageTitle|default('') ?: item.title|default('') }}"{% if strClass %} class="{{ strClass }}"{% endif %}{% if item.accesskey|default('') != '' %} accesskey="{{ item.accesskey }}"{% endif %}{% if item.nofollow|default(false) %} rel="nofollow"{% endif %}{{ item.target|default('')|raw }} role="menuitem"{% if item.subitems|default('') %} aria-haspopup="true"{% endif %}>
+			{% if item.page_image|default('') %}<span class="page_image">{{ item.page_image|raw }}</span>{% endif %}
+			<h2>{{ item.pageTitle|default('') ?: item.title|default('') }}</h2>
+			<span class="page_teaser">{{ item.page_teaser|default('') }}</span></a>
+			{{ item.subitems|default('')|raw }}</li>
+		{% endif %}
+	{% endfor %}
+</ul>

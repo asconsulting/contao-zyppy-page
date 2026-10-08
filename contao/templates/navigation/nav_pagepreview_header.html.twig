@@ -1,0 +1,51 @@
+{#
+	Twig port of nav_pagepreview_header.html5. Flat legacy identifier
+	`nav_pagepreview_header` - see the note in mod_pagepreview.html.twig for why
+	there is no `.twig-root` marker and why the .html5 was deleted.
+
+	`rel="{{ item.alias }}"` on each <li> IS LOAD-BEARING. page_slider.js pairs
+	the header list against the body list by that attribute; without it the
+	slider silently stops tracking. Do not remove it and do not rename it to
+	something more idiomatic.
+
+	tl_module.navSubitemLimit ("The maximum number of sub-items to show"): core's
+	ModuleNavigation::renderNavigation() parses $items inline with no filter
+	seam, so the cap is applied here. `level` is the pre-recursion level label
+	core assigns before recursing one level deeper (Module.php: "level_" .
+	$level++), so it lines up with the original fork's un-incremented check: the
+	cap applies from level_3 down only. Both the header and body templates come
+	from the same renderNavigation() walk, so both reproduce it.
+
+	first/last are computed over the SLICED list, which is why loop.first and
+	loop.last are correct here - slicing changes which item is last. Core dropped
+	this computation from renderNavigation(); it is re-applied so page_slider.js
+	and any theme CSS keying off it keep working.
+
+	Escaping: page_teaser, title, pageTitle, alias, class, href and accesskey are
+	DATA and are now escaped - that is the security fix this port exists for.
+	link, page_image and target are markup core has already built, so they stay
+	|raw.
+#}
+{% set intLevel = level|replace({'level_': ''}) + 0 %}
+{% set intLimit = module.navSubitemLimit|default(0) + 0 %}
+{% set arrShown = (intLimit > 0 and intLevel > 1) ? items|slice(0, intLimit) : items %}
+<ul class="{{ level }}" role="{{ level == 'level_1' ? 'menubar' : 'menu' }}">
+	{% for item in arrShown %}
+		{% set strClass = (item.class|default('') ~ (loop.first ? ' first' : '') ~ (loop.last ? ' last' : ''))|trim %}
+		{% if item.isActive|default(false) %}
+			<li class="{{ strClass }}" rel="{{ item.alias|default('') }}">
+				<span class="{{ strClass }}" role="menuitem"{% if item.subitems|default('') %} aria-haspopup="true"{% endif %}>{{ item.link|default('')|raw }}
+					<span class="page_image">{{ item.page_image|default('')|raw }}</span>
+					<span class="page_teaser">{{ item.page_teaser|default('') }}</span>
+				</span>
+			</li>
+		{% else %}
+			<li{% if strClass %} class="{{ strClass }}"{% endif %} rel="{{ item.alias|default('') }}">
+				<a href="{{ item.href|default('') ?: './' }}" title="{{ item.pageTitle|default('') ?: item.title|default('') }}"{% if strClass %} class="{{ strClass }}"{% endif %}{% if item.accesskey|default('') != '' %} accesskey="{{ item.accesskey }}"{% endif %}{% if item.nofollow|default(false) %} rel="nofollow"{% endif %}{{ item.target|default('')|raw }} role="menuitem"{% if item.subitems|default('') %} aria-haspopup="true"{% endif %}>
+					<span class="page_image">{{ item.page_image|default('')|raw }}</span>
+					{{ item.link|default('')|raw }}
+				</a>
+			</li>
+		{% endif %}
+	{% endfor %}
+</ul>
